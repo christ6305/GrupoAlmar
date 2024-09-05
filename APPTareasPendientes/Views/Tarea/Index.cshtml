@@ -1,0 +1,97 @@
+﻿@model IEnumerable<TareaModel>
+
+<button class="btn btn-primary" data-toggle="modal" data-target="#editModal" data-id="0">Crear una nueva tarea</button>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Título</th>
+            <th>Descripción</th>
+            <th>Fecha Creación</th>
+            <th>Fecha Vencimiento</th>
+            <th>Completada</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tarea in Model)
+        {
+            <tr>
+                <td>@tarea.Id</td>
+                <td>@tarea.Titulo</td>
+                <td>@tarea.Descripcion</td>
+                <td>@tarea.FechaCreacion.ToString("yyyy-MM-dd")</td>
+                <td>@tarea.FechaVencimiento.ToString("yyyy-MM-dd")</td>
+                <td>@tarea.Completada</td>
+                <td>
+                    <button class="btn btn-primary" data-toggle="modal" data-target="#editModal" data-id="@tarea.Id">Editar</button>
+                    <form method="post" action="@Url.Action("Delete", "Tarea", new { id = tarea.Id })" style="display:inline;">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div id="modalTitle"></div>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="modalContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#editModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var id = button.data('id');
+
+                if (id === 0) {
+                    $.get('@Url.Action("Create", "Tarea")', function (data) {
+                        $('#modalTitle').html('<h5 class="modal-title" id="editModalLabel">Crear Tarea </h5>');
+                        $('#modalContent').html(data);
+                    });
+                } else {
+                    $.get('@Url.Action("Edit", "Tarea")', { id: id }, function (data) {
+                        $('#modalTitle').html('<h5 class="modal-title" id="editModalLabel">Editar Tarea </h5>');
+                        $('#modalContent').html(data);
+                    });
+                }
+            });
+
+            $(document).on('submit', '#editModal form', function (e) {
+                e.preventDefault();
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: $(this).serialize(),
+                    success: function (result) {
+                        $('#editModal').modal('hide');
+                        window.location.href = '@Url.Action("Index", "Tarea")';
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error en la solicitud AJAX: ", error);
+                        alert("Hubo un problema con la solicitud. Verifique los datos e intente nuevamente.");
+                    }
+                });
+            });
+        });
+    </script>
+}
